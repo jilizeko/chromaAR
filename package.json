@@ -1,0 +1,23 @@
+{
+  "name": "ar-chroma-key-video",
+  "version": "1.0.0",
+  "description": "Web application for displaying chroma key (green screen) videos in augmented reality using Three.js",
+  "main": "main.js",
+  "scripts": {
+    "start": "http-server -c-1",
+    "build": "mkdir -p dist && cp -r *.html *.js *.css js/ dist/"
+  },
+  "keywords": [
+    "AR",
+    "augmented-reality",
+    "chroma-key",
+    "green-screen",
+    "three.js",
+    "webgl"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "http-server": "^14.1.1"
+  }
+}

@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=no">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>AR Chroma Key Video</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Three.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.157.0/build/three.min.js"></script>
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <div id="scene-container"></div>
+    
+    <!-- Camera video element for AR background -->
+    <div id="camera-container">
+        <video id="camera-video" autoplay playsinline muted></video>
+    </div>
+    
+    <!-- Loading overlay -->
+    <div id="loading-overlay">
+        <div class="spinner"></div>
+        <div id="loading-text">Initializing...</div>
+    </div>
+    
+    <!-- Help overlay -->
+    <div id="help-overlay" class="hidden">
+        <div class="help-content">
+            <h2>How to Use</h2>
+            <button id="close-help" class="close-button"><i class="fas fa-times"></i></button>
+            <div class="help-section">
+                <h3>1. Load a Video</h3>
+                <p>Click "Choose Video File" to select a video with a green screen background.</p>
+            </div>
+            <div class="help-section">
+                <h3>2. Enable Camera</h3>
+                <p>Click "Enable Camera" to use your device camera as the AR background.</p>
+            </div>
+            <div class="help-section">
+                <h3>3. Adjust Chroma Key</h3>
+                <p>Use the sliders to adjust how the green background is removed.</p>
+            </div>
+            <div class="help-section">
+                <h3>4. Position the Video</h3>
+                <p>Use the position controls or drag directly to place the video in your space.</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="container">
+        <div class="header">
+            <h1>AR Chroma Key Video</h1>
+            <button id="show-help" class="icon-button"><i class="fas fa-question-circle"></i></button>
+        </div>
+        
+        <div id="app-status">Three.js is initializing...</div>
+        
+        <div class="video-input-container">
+            <label for="video-input" class="custom-file-upload">
+                <span>Choose Video File</span>
+            </label>
+            <input type="file" id="video-input" accept="video/*" />
+            <div id="file-name">No file selected</div>
+            <div id="video-error" class="error-message"></div>
+        </div>
+        
+        <!-- Controls for chroma key parameters -->
+        <div class="controls-container">
+            <div class="controls-header">
+                <h2>Chroma Key Controls</h2>
+                <button id="toggle-controls" class="toggle-button">▼</button>
+            </div>
+            
+            <div class="controls-body">
+                <!-- Key Color Controls -->
+                <div class="control-group">
+                    <label for="key-color">Key Color:</label>
+                    <input type="color" id="key-color" value="#00ff00">
+                </div>
+                
+                <!-- Similarity Slider -->
+                <div class="control-group">
+                    <label for="similarity">Similarity: <span id="similarity-value">0.4</span></label>
+                    <input type="range" id="similarity" min="0" max="1" step="0.01" value="0.4">
+                </div>
+                
+                <!-- Smoothness Slider -->
+                <div class="control-group">
+                    <label for="smoothness">Smoothness: <span id="smoothness-value">0.08</span></label>
+                    <input type="range" id="smoothness" min="0" max="0.5" step="0.01" value="0.08">
+                </div>
+                
+                <!-- Spill Slider -->
+                <div class="control-group">
+                    <label for="spill">Spill Reduction: <span id="spill-value">0.3</span></label>
+                    <input type="range" id="spill" min="0" max="1" step="0.01" value="0.3">
+                </div>
+                
+                <!-- Video Controls -->
+                <div class="control-group video-controls">
+                    <button id="play-pause" class="control-button" disabled>Play/Pause</button>
+                    <button id="reset-params" class="control-button">Reset Parameters</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Positioning controls -->
+        <div class="controls-container positioning-controls">
+            <div class="controls-header">
+                <h2>Position Controls</h2>
+                <button id="toggle-position-controls" class="toggle-button">▼</button>
+            </div>
+            
+            <div class="controls-body" id="position-controls-body">
+                <!-- Position Controls -->
+                <div class="control-group">
+                    <label>Position X: <span id="position-x-value">0</span></label>
+                    <input type="range" id="position-x" min="-5" max="5" step="0.1" value="0">
+                </div>
+                
+                <div class="control-group">
+                    <label>Position Y: <span id="position-y-value">0</span></label>
+                    <input type="range" id="position-y" min="-5" max="5" step="0.1" value="0">
+                </div>
+                
+                <div class="control-group">
+                    <label>Position Z: <span id="position-z-value">0</span></label>
+                    <input type="range" id="position-z" min="-5" max="5" step="0.1" value="0">
+                </div>
+                
+                <!-- Rotation Controls -->
+                <div class="control-group">
+                    <label>Rotation X: <span id="rotation-x-value">0</span>°</label>
+                    <input type="range" id="rotation-x" min="-180" max="180" step="1" value="0">
+                </div>
+                
+                <div class="control-group">
+                    <label>Rotation Y: <span id="rotation-y-value">0</span>°</label>
+                    <input type="range" id="rotation-y" min="-180" max="180" step="1" value="0">
+                </div>
+                
+                <div class="control-group">
+                    <label>Rotation Z: <span id="rotation-z-value">0</span>°</label>
+                    <input type="range" id="rotation-z" min="-180" max="180" step="1" value="0">
+                </div>
+                
+                <!-- Scale Control -->
+                <div class="control-group">
+                    <label>Scale: <span id="scale-value">1.0</span></label>
+                    <input type="range" id="scale" min="0.1" max="3" step="0.1" value="1.0">
+                </div>
+                
+                <!-- Reset button -->
+                <div class="control-group position-controls">
+                    <button id="reset-position" class="control-button">Reset Position</button>
+                    <button id="toggle-grid" class="control-button">Toggle Grid</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Performance controls -->
+        <div class="controls-container">
+            <div class="controls-header">
+                <h2>Performance Settings</h2>
+                <button id="toggle-performance-controls" class="toggle-button">▼</button>
+            </div>
+            
+            <div class="controls-body" id="performance-controls-body">
+                <!-- Resolution scaling -->
+                <div class="control-group">
+                    <label>Resolution: <span id="resolution-value">100%</span></label>
+                    <input type="range" id="resolution" min="25" max="100" step="5" value="100">
+                </div>
+                
+                <!-- Anti-aliasing toggle -->
+                <div class="control-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="antialias" checked>
+                        Anti-aliasing
+                    </label>
+                </div>
+                
+                <!-- Show FPS toggle -->
+                <div class="control-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="show-fps" checked>
+                        Show FPS counter
+                    </label>
+                </div>
+                
+                <!-- Performance stats -->
+                <div id="performance-stats">
+                    <div>Average FPS: <span id="avg-fps">--</span></div>
+                    <div>Render time: <span id="render-time">--</span> ms</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Additional Performance Controls -->
+        <div class="controls-container performance-controls">
+            <div class="controls-header">
+                <h2>Performance Options</h2>
+                <button id="toggle-performance-controls" class="toggle-button">▼</button>
+            </div>
+            
+            <div class="controls-body" id="performance-controls-body">
+                <!-- Resolution Scaling -->
+                <div class="control-group">
+                    <label for="resolution-scale">Resolution Scale: <span id="resolution-scale-value">1.0</span></label>
+                    <input type="range" id="resolution-scale" min="0.25" max="1.0" step="0.05" value="1.0">
+                </div>
+                
+                <!-- Shader Complexity -->
+                <div class="control-group">
+                    <label for="shader-quality">Shader Quality:</label>
+                    <select id="shader-quality">
+                        <option value="high">High</option>
+                        <option value="medium" selected>Medium</option>
+                        <option value="low">Low</option>
+                    </select>
+                </div>
+                
+                <!-- Animation throttling -->
+                <div class="control-group">
+                    <label for="throttle-fps">Limit FPS: <span id="throttle-fps-value">60</span></label>
+                    <input type="range" id="throttle-fps" min="15" max="60" step="5" value="60">
+                </div>
+                
+                <!-- Show/Hide FPS Counter -->
+                <div class="control-group">
+                    <label class="checkbox-container">
+                        Show FPS Counter
+                        <input type="checkbox" id="show-fps" checked>
+                        <span class="checkmark"></span>
+                    </label>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Camera controls -->
+        <div class="camera-controls">
+            <button id="enable-camera" class="control-button"><i class="fas fa-camera"></i> Enable Camera</button>
+            <div id="camera-error" class="error-message"></div>
+        </div>
+    </div>
+    
+    <!-- FPS counter -->
+    <div id="fps-counter">FPS: --</div>
+    
+    <!-- Hidden video element that will hold the selected video -->
+    <video id="input-video" muted loop playsinline style="display: none;"></video>
+    
+    <!-- Загрузка модульных скриптов -->
+    <script src="js/shaders.js"></script>
+    <script src="js/three-setup.js"></script>
+    <script src="js/ui-controls.js"></script>
+    <script src="js/camera-handler.js"></script>
+    <script src="js/video-handler.js"></script>
+    <script src="main.js"></script>
+</body>
+</html>
